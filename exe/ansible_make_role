@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require 'ansible_make_role.rb'
+
+puts AnsibleMakeRole::VERSION
