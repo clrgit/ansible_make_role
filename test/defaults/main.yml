@@ -1,0 +1,8 @@
+---
+portal_login_name: "portal-login"
+portal_login_domain: "danak.dk"
+portal_login_git: "git@rbprod:./portal-login.git"
+portal_login_user: "portal_login"
+portal_login_group: "portal_login"
+portal_login_path: "/var/www/portal-login"
+
