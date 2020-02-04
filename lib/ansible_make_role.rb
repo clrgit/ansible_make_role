@@ -41,7 +41,7 @@ module AnsibleMakeRole
       file = "#{dir}/main.yml"
 
       puts "Create #{file}" if verbose
-      FileUtils.mkdir(dir)
+      FileUtils.mkdir_p(dir)
       File.open("#{dir}/main.yml", "w") { |f|
         f.puts "---" if section != "meta"
         unindent(lines).each { |l| f.puts l }
