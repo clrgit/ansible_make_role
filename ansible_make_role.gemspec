@@ -9,9 +9,18 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Claus Rasmussen"]
   spec.email         = ["claus.l.rasmussen@gmail.com"]
 
-  spec.summary       = %q{Make roles from make.yml files}
-  spec.description   = %q{ansible_make_role gem}
-  spec.homepage      = "http://github.com/clrgit/shellopts"
+  spec.summary       = %q{Make Ansible role from make.yml file}
+  spec.description   = %q{
+                          Instead of having an Ansible role per-directory
+                          main.yml file, ansible-make-role processes a make.yml
+                          file in the role directory and generates the main.yml
+                          files from that. In make.yml each main.yml definition
+                          is contained in a per-file section: 'defaults',
+                          'vars', 'tasks', and 'handlers'. Definitions outside
+                          of those sections (notably 'dependencies') are going
+                          to the meta/main.yml file
+                       }
+  spec.homepage      = "http://github.com/clrgit/ansible_make_role"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
   # to allow pushing to a single host or delete this section to allow pushing to any host.

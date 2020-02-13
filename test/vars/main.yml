@@ -1,3 +1,0 @@
----
-portal_host: "{{ portal_login_name}}.{{ portal_login_domain }}"
-
