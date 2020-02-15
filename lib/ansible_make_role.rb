@@ -1,11 +1,14 @@
 require "ansible_make_role/version"
 
+require "shellopts" 
+
 require "fileutils"
 
 module AnsibleMakeRole
   def self.make(source_dir, verbose: false, force: false)
     source = "#{source_dir}/make.yml"
     target_dir = source_dir
+    # TODO: Doesn't belong at this level - catch exceptions in exe instead
     File.file?(source) or ShellOpts::error "Can't read file #{source.inspect}"
     File.directory?(target_dir) or ShellOpts::error "Can't find directory #{target_dir}"
 
