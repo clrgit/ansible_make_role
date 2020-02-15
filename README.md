@@ -70,3 +70,4 @@ Install it for the current ruby using:
 
     $ gem install ansible_make_role
 
+Please note that the gem name uses underscores but the command uses dashes ('ansible-make-role')
