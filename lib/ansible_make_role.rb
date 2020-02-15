@@ -12,11 +12,11 @@ module AnsibleMakeRole
     File.file?(source) or ShellOpts::error "Can't read file #{source.inspect}"
     File.directory?(target_dir) or ShellOpts::error "Can't find directory #{target_dir}"
 
-    meta_yml = "#{target}/meta/main.yml"
+    meta_yml = "#{target_dir}/meta/main.yml"
     if force || !File.exist?(meta_yml) || File.mtime(source) > File.mtime(meta_yml)
-      compile_role(source, target, verbose: verbose)
+      compile_role(source, target_dir, verbose: verbose)
     else
-      puts "#{target} is up to date" if verbose
+      puts "#{target_dir} is up to date" if verbose
     end
   end
 
@@ -24,14 +24,14 @@ private
   # source is a file, target is a directory. Target can be nil and defaults to
   # dirname of source
   def self.compile_role(source, target, verbose: false)
+    meta = []
     sections = {
-      "meta" => [],
       "defaults" => [],
       "vars" => [],
       "tasks" => [],
       "handlers" => []
     }
-    lines = sections["meta"]
+    current_section = meta
 
     puts "Parsing #{source}" if verbose
     File.readlines(source).each { |line|
@@ -40,17 +40,17 @@ private
       if line =~ /^(\w+)\s*:/
         section = $1
         if sections.key?(section) # Built-in section?
-          lines = sections[section]
+          current_section = sections[section]
         else # Everything else goes to the meta file incl. section header
-          lines = sections["meta"]
-          lines << line
+          current_section = meta
+          current_section << line
         end
       else
-        lines << line
+        current_section << line
       end
     }
 
-    sections.each { |section, lines|
+    (sections.to_a + [["meta", meta]]).each { |section, lines|
       next if lines.empty? && section != "meta"
       dir = "#{target}/#{section}"
       file = "#{dir}/main.yml"
