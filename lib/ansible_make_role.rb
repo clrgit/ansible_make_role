@@ -3,7 +3,7 @@ require "ansible_make_role/version"
 require "fileutils"
 
 module AnsibleMakeRole
-  def make_role(source_dir, verbose: false, force: false)
+  def self.make(source_dir, verbose: false, force: false)
     source = "#{source_dir}/make.yml"
     target_dir = source_dir
     File.file?(source) or ShellOpts::error "Can't read file #{source.inspect}"
@@ -20,7 +20,7 @@ module AnsibleMakeRole
 private
   # source is a file, target is a directory. Target can be nil and defaults to
   # dirname of source
-  def compile_role(source, target, verbose: false)
+  def self.compile_role(source, target, verbose: false)
     sections = {
       "meta" => [],
       "defaults" => [],
@@ -63,7 +63,7 @@ private
 
   # Unindent lines by the indentation of the first non-comment and non-blank
   # line
-  def unindent(lines)
+  def self.unindent(lines)
     line = lines.find { |l| l !~ /^\s*#/ && l !~ /^\s*$/ }
     return lines if line.nil?
     line =~ /^(\s*)/

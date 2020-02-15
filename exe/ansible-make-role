@@ -17,8 +17,7 @@ args = ShellOpts.process(USAGE, ARGV) { |opt, arg|
 }
 args.size > 0 or args << "."
 
-include AnsibleMakeRole
 for source in args
   File.directory?(source) or ShellOpts.error "Not a directory: #{source.inspect}"
-  make_role(source, verbose: verbose, force: force)
+  AnsibleMakeRole.make(source, verbose: verbose, force: force)
 end
