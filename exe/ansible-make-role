@@ -3,7 +3,7 @@
 require 'ansible_make_role.rb'
 require "shellopts"
 
-USAGE = "f,force t,target-dir=DIR v,verbose -- DIRECTORY..."
+USAGE = "f,force t,target-dir=DIR v,verbose version -- DIRECTORY..."
 
 force = false
 target_dir = nil
@@ -14,6 +14,7 @@ args = ShellOpts.process(USAGE, ARGV) { |opt, arg|
     when '-f', '--force'; force = true
     when '-t', '--target-dir'; target_dir = arg
     when '-v', '--verbose'; verbose = true
+    when '--version'; puts "ansible-make-role #{AnsibleMakeRole::VERSION}"; exit
   end
 }
 args.size > 0 or args << "."
