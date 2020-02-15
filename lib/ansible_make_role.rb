@@ -1,16 +1,19 @@
 require "ansible_make_role/version"
 
-require "shellopts" 
-
 require "fileutils"
 
 module AnsibleMakeRole
+  class Error < StandardError; end
+  class CantReadFile < Error; end
+  class CantWriteDir < Error; end
+
   def self.make(source_dir, verbose: false, force: false)
     source = "#{source_dir}/make.yml"
     target_dir = source_dir
-    # TODO: Doesn't belong at this level - catch exceptions in exe instead
-    File.file?(source) or ShellOpts::error "Can't read file #{source.inspect}"
-    File.directory?(target_dir) or ShellOpts::error "Can't find directory #{target_dir}"
+
+    # tests require directory to be checked before file
+    File.directory?(target_dir) && File.writable?(target_dir) or raise CantWriteDir.new(target_dir)
+    File.file?(source) && File.readable?(source) or raise CantReadFile.new(source)
 
     meta_yml = "#{target_dir}/meta/main.yml"
     if force || !File.exist?(meta_yml) || File.mtime(source) > File.mtime(meta_yml)

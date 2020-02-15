@@ -66,18 +66,18 @@ describe "ansible-make-role command" do
     end
   end
 
-  it "fails if directory is not found" do
+  it "fails if directory is not writable" do
     FileUtils.rm_rf(TMPDIR)
     exe.call(TMPDIR)
     expect(status).to eq 1
-    expect(stderr).to include("ansible-make-role: Not a directory: \"#{TMPDIR}\"")
+    expect(stderr).to include("ansible-make-role: Can't write to directory #{TMPDIR}")
   end
 
-  it "fails if make.yml is not found" do
+  it "fails if make.yml is not readable" do
     FileUtils.rm(make_yml_path)
     exe.call(TMPDIR)
     expect(status).to eq 1
-    expect(stderr).to include("ansible-make-role: Can't read file \"#{TMPDIR}/make.yml\"")
+    expect(stderr).to include("ansible-make-role: Can't read file #{TMPDIR}/make.yml")
   end
 
   it "accepts multiple directory arguments" do
