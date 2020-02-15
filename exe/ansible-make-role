@@ -3,16 +3,14 @@
 require 'ansible_make_role.rb'
 require "shellopts"
 
-USAGE = "f,force t,target-dir=DIR v,verbose version -- DIRECTORY..."
+USAGE = "f,force v,verbose version -- DIRECTORY..."
 
 force = false
-target_dir = nil
 verbose = false
 
 args = ShellOpts.process(USAGE, ARGV) { |opt, arg|
   case opt
     when '-f', '--force'; force = true
-    when '-t', '--target-dir'; target_dir = arg
     when '-v', '--verbose'; verbose = true
     when '--version'; puts "ansible-make-role #{AnsibleMakeRole::VERSION}"; exit
   end
@@ -22,6 +20,5 @@ args.size > 0 or args << "."
 include AnsibleMakeRole
 for source in args
   File.directory?(source) or ShellOpts.error "Not a directory: #{source.inspect}"
-  target_dir ||= File.dirname(source)
-  make_role(source, target, verbose: verbose, force: force)
+  make_role(source, verbose: verbose, force: force)
 end

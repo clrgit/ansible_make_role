@@ -5,7 +5,7 @@ Pre-compiler that turns `make.yml` files into Ansible roles
 ## Usage
 
 ```shell
-    ansible-make-role -f|--force -t|--target-dir=DIR -v|--verbose DIR...
+    ansible-make-role -f|--force -v|--verbose --version DIR...
 ```
 
 `ansible-make-role` expects a `make.yml` file in each of the given directories
@@ -50,6 +50,19 @@ handlers: # Goes to handlers/main.yml"
 
   ...
 ```
+
+## Options
+
+
+`-f, --force`
+        Re-generate all files even if not needed
+
+`-v, --verbose`
+        Report progress
+
+`--version`
+        Print version
+
 
 ## Installation
 

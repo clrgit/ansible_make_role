@@ -3,9 +3,9 @@ require "ansible_make_role/version"
 require "fileutils"
 
 module AnsibleMakeRole
-  def make_role(source_dir, target_dir = source_dir, verbose: false, force: false)
+  def make_role(source_dir, verbose: false, force: false)
     source = "#{source_dir}/make.yml"
-    target = "#{target_dir}/#{File.basename(source_dir)}"
+    target_dir = source_dir
     File.file?(source) or ShellOpts::error "Can't read file #{source.inspect}"
     File.directory?(target_dir) or ShellOpts::error "Can't find directory #{target_dir}"
 
@@ -20,7 +20,7 @@ module AnsibleMakeRole
 private
   # source is a file, target is a directory. Target can be nil and defaults to
   # dirname of source
-  def compile_role(source, target = File.dirname(source), verbose: false)
+  def compile_role(source, target, verbose: false)
     sections = {
       "meta" => [],
       "defaults" => [],
