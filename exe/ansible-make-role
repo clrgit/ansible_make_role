@@ -21,6 +21,6 @@ args.size > 0 or args << "."
 include AnsibleMakeRole
 for source in args
   File.directory?(source) or ShellOpts.error "Not a directory: #{source.inspect}"
-  target = target_dir || File.dirname(source)
+  target_dir ||= File.dirname(source)
   make_role(source, target, verbose: verbose, force: force)
 end
