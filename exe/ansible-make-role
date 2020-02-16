@@ -19,7 +19,7 @@ args.size > 0 or args << "."
 
 for source in args
   begin
-    AnsibleMakeRole.make(source, verbose: verbose, force: force)
+    AnsibleMakeRole.make("#{source}/make.yml", verbose: verbose, force: force)
   rescue AnsibleMakeRole::CantReadFile => ex
     ShellOpts::error("Can't read file #{ex.message}")
   rescue AnsibleMakeRole::CantWriteDir => ex

@@ -1,4 +1,3 @@
-require 'yaml'
 require 'shellopts'
 
 require 'helpers/role_helper.rb'

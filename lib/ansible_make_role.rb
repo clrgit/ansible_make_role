@@ -7,10 +7,7 @@ module AnsibleMakeRole
   class CantReadFile < Error; end
   class CantWriteDir < Error; end
 
-  def self.make(source_dir, verbose: false, force: false)
-    source = "#{source_dir}/make.yml"
-    target_dir = source_dir
-
+  def self.make(source, target_dir = File.dirname(source), verbose: false, force: false)
     # tests require directory to be checked before file
     File.directory?(target_dir) && File.writable?(target_dir) or raise CantWriteDir.new(target_dir)
     File.file?(source) && File.readable?(source) or raise CantReadFile.new(source)
