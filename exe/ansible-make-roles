@@ -5,6 +5,18 @@ require 'ansible_make_role.rb'
 require "indented_io"
 require "shellopts"
 
+def update_file?(src, dst)
+  File.file?(dst) or return true
+  File.mtime(src) > File.mtime(dst) || File.size(src) != File.size(dst)
+end
+
+def update_directory?(src, dst)
+  File.directory?(dst) or return true
+  result = system("diff -qr #{src} #{dst} &>/dev/null")
+  raise if result.nil?
+  !result
+end
+
 USAGE = "f,force r,roles-dir=DIR G,no-gitignore q,quiet v,verbose version -- MAKE-ROLES-DIRECTORY"
 
 # TODO
@@ -52,10 +64,12 @@ if gitignore
   gitignore_dirty = false
 end
 
-Dir["#{make_roles_dir}/*.yml"].each { |src|
-  name = File.basename(src, ".yml")
+Dir["#{make_roles_dir}/*.yml"].each { |src_file|
+  name = File.basename(src_file, ".yml")
   src_dir = "#{make_roles_dir}/#{name}"
   dst_dir = "#{roles_dir}/#{name}"
+
+  FileUtils.mkdir_p(dst_dir)
 
   puts "Making #{name}" if !quiet
   indent {
@@ -73,28 +87,47 @@ Dir["#{make_roles_dir}/*.yml"].each { |src|
       dirs, files = files.partition { |f| File.directory?(f) }
       templates, files = files.partition { |f| f =~ /\.j2$/ }
 
-      if !templates.empty?
-        puts "Copying templates" if verbose
-        FileUtils.mkdir_p(templates_dir)
-        templates.each { |template| FileUtils.cp(template, templates_dir, preserve: true) }
+      if !dirs.empty?
+        first = true
+        dirs.each { |src|
+          dst = "#{dst_dir}/#{File.basename(src)}"
+          if update_directory?(src, dst)
+            puts "Copying directorie(s)" if verbose && first
+            first = false
+            FileUtils.cp_r(src, dst, preserve: true, remove_destination: true)
+          end
+        }
+        puts "Directories are up to date" if verbose && first
       end
       if !files.empty?
-        if !files.empty?
-          puts "Copying files" if verbose
-          FileUtils.mkdir_p(files_dir)
-          files.each { |file| FileUtils.cp(file, files_dir, preserve: true) }
-        end
-        if !dirs.empty?
-          for dir in dirs
-            puts "Copying #{File.basename(dir)}"
-            FileUtils.cp_r(dir, dst_dir, preserve: true, remove_destination: true)
+        first = true
+        FileUtils.mkdir_p(files_dir)
+        files.each { |src|
+          dst = "#{files_dir}/#{File.basename(src)}"
+          if update_file?(src, dst)
+            puts "Copying file(s)" if verbose && first
+            first = false
+            FileUtils.cp(src, dst, preserve: true) 
           end
-        end
+        }
+        puts "Files are up to date" if verbose && first
+      end
+      if !templates.empty?
+        first = true
+        FileUtils.mkdir_p(templates_dir)
+        templates.each { |src|
+          dst = "#{templates_dir}/#{File.basename(src)}"
+          if update_file?(src, dst)
+            puts "Copying template(s)" if verbose && first
+            first = false
+            FileUtils.cp(src, dst, preserve: true) 
+          end
+        }
+        puts "Templates are up to date" if verbose && first
       end
     end
 
-    FileUtils.mkdir_p(dst_dir)
-    AnsibleMakeRole.make(src, dst_dir, verbose: verbose, force: force)
+    AnsibleMakeRole.make(src_file, dst_dir, verbose: verbose, force: force)
 
     if gitignore && !gitignore_lines.include?("/#{name}")
       gitignore_lines << "/#{name}"
