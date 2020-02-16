@@ -18,6 +18,11 @@ args = ShellOpts.process(USAGE, ARGV) { |opt, arg|
 args.size > 0 or args << "."
 
 for source in args
-  File.directory?(source) or ShellOpts.error "Not a directory: #{source.inspect}"
-  AnsibleMakeRole.make(source, verbose: verbose, force: force)
+  begin
+    AnsibleMakeRole.make(source, verbose: verbose, force: force)
+  rescue AnsibleMakeRole::CantReadFile => ex
+    ShellOpts::error("Can't read file #{ex.message}")
+  rescue AnsibleMakeRole::CantWriteDir => ex
+    ShellOpts::error("Can't write to directory #{ex.message}")
+  end
 end
