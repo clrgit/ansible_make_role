@@ -1,0 +1,2 @@
+o Replace ansible-make-role with an option: "-m - Make a single directory with a 'make.yml' file"
+o Add a "warning: auto-generated" header to all generated files

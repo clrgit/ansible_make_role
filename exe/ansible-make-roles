@@ -1,28 +1,37 @@
 #!/usr/bin/env ruby
 
 require 'ansible_make_role.rb'
+
+require "indented_io"
 require "shellopts"
 
-USAGE = "f,force v,verbose version r,roles-dir=DIR G,no-git-ignore -- MAKE-ROLES-DIRECTORY"
+USAGE = "f,force r,roles-dir=DIR G,no-gitignore q,quiet v,verbose version -- MAKE-ROLES-DIRECTORY"
+
+# TODO
+#   o Replace ansible-make-role with an option:
+#       -m
+#         Make a single directory with a 'make.yml' file. Exclusive with -r
 
 force = false
+quiet = false
 verbose = false
 roles_dir = nil
-git_ignore = true
+gitignore = true
 
 args = ShellOpts.process(USAGE, ARGV) { |opt, arg|
   case opt
     when '-f', '--force'; force = true
+    when '-r', '--roles-dir'; roles_dir = arg
+    when '-G', '--no-gitignore'; gitignore = false
+    when '-q', '--quiet'; quiet = true
     when '-v', '--verbose'; verbose = true
-    when '--version'; puts "ansible-make-role #{AnsibleMakeRole::VERSION}"; exit
-    when '-r', '--roles'; roles_dir = arg
-    when '-G', '--no-git-ignore'; git_ignore = true
+    when '--version'; puts "#{PROGRAM} #{AnsibleMakeRole::VERSION}"; exit
   end
 }
 
 args.size <= 1 or ShellOpts.error "Illegal number of arguments"
-args.size != 0 or args << "make-roles"
-make_roles_dir = args.first
+make_roles_dir = args.first || "make-roles"
+File.exist?(make_roles_dir) or ShellOpts.error "Can't find #{make_roles_dir}"
 File.directory?(make_roles_dir) or ShellOpts.error "Not a directory - #{make_roles_dir}"
 
 if roles_dir
@@ -36,11 +45,66 @@ else
   File.directory?(roles_dir) or ShellOpts.error "Can't find roles directory"
 end
 
+if gitignore
+  gitignore_file = "#{roles_dir}/.gitignore"
+  FileUtils.touch(gitignore_file)
+  gitignore_lines = IO.readlines(gitignore_file).map { |l| l.chomp }
+  gitignore_dirty = false
+end
 
+Dir["#{make_roles_dir}/*.yml"].each { |src|
+  name = File.basename(src, ".yml")
+  src_dir = "#{make_roles_dir}/#{name}"
+  dst_dir = "#{roles_dir}/#{name}"
 
+  puts "Making #{name}" if !quiet
+  indent {
+    meta_dir = "#{dst_dir}/meta"
+    defaults_dir = "#{dst_dir}/defaults"
+    vars_dir = "#{dst_dir}/vars"
+    tasks_dir = "#{dst_dir}/tasks"
+    handlers_dir = "#{dst_dir}/handlers"
+    files_dir = "#{dst_dir}/files"
+    templates_dir = "#{dst_dir}/templates"
 
+    # Copy auxillary files and directories
+    if File.directory?(src_dir)
+      files = Dir["#{src_dir}/*"]
+      dirs, files = files.partition { |f| File.directory?(f) }
+      templates, files = files.partition { |f| f =~ /\.j2$/ }
 
-#for source in args
-# File.directory?(source) or ShellOpts.error "Not a directory: #{source.inspect}"
-# AnsibleMakeRole.make(source, verbose: verbose, force: force)
-#end
+      if !templates.empty?
+        puts "Copying templates" if verbose
+        FileUtils.mkdir_p(templates_dir)
+        templates.each { |template| FileUtils.cp(template, templates_dir, preserve: true) }
+      end
+      if !files.empty?
+        if !files.empty?
+          puts "Copying files" if verbose
+          FileUtils.mkdir_p(files_dir)
+          files.each { |file| FileUtils.cp(file, files_dir, preserve: true) }
+        end
+        if !dirs.empty?
+          for dir in dirs
+            puts "Copying #{File.basename(dir)}"
+            FileUtils.cp_r(dir, dst_dir, preserve: true, remove_destination: true)
+          end
+        end
+      end
+    end
+
+    FileUtils.mkdir_p(dst_dir)
+    AnsibleMakeRole.make(src, dst_dir, verbose: verbose, force: force)
+
+    if gitignore && !gitignore_lines.include?("/#{name}")
+      gitignore_lines << "/#{name}"
+      gitignore_dirty = true
+    end
+  }
+}
+
+if gitignore && gitignore_dirty
+  puts "Updating #{gitignore_file}" if !quiet
+  IO.write(gitignore_file, gitignore_lines.join("\n") + "\n")
+end
+

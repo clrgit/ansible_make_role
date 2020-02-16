@@ -44,4 +44,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec", "~> 3.0"
 
   spec.add_dependency "shellopts", "0.9.3"
+  spec.add_dependency "indented_io"
 end
