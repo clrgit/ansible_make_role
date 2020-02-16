@@ -52,6 +52,7 @@ private
 
     (sections.to_a + [["meta", meta]]).each { |section, lines|
       next if lines.empty? && section != "meta"
+      next if lines.all? { |l| l =~ /^\s*$/ }
       dir = "#{target}/#{section}"
       file = "#{dir}/main.yml"
 
