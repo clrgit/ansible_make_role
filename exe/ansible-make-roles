@@ -19,11 +19,6 @@ end
 
 USAGE = "f,force r,roles-dir=DIR G,no-gitignore q,quiet v,verbose version -- MAKE-ROLES-DIRECTORY"
 
-# TODO
-#   o Replace ansible-make-role with an option:
-#       -m
-#         Make a single directory with a 'make.yml' file. Exclusive with -r
-
 force = false
 quiet = false
 verbose = false
