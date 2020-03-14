@@ -4,26 +4,55 @@ require "fileutils"
 
 module AnsibleMakeRole
   class Error < StandardError; end
-  class CantReadFile < Error; end
-  class CantWriteDir < Error; end
 
-  def self.make(source, target_dir = File.dirname(source), verbose: false, force: false)
-    # tests require directory to be checked before file
-    File.directory?(target_dir) && File.writable?(target_dir) or raise CantWriteDir.new(target_dir)
-    File.file?(source) && File.readable?(source) or raise CantReadFile.new(source)
+  @force = true
+  def self.force=(value) @force = value end
+  def self.force() @force end
 
-    meta_yml = "#{target_dir}/meta/main.yml"
-    if force || !File.exist?(meta_yml) || File.mtime(source) > File.mtime(meta_yml)
-      compile_role(source, target_dir, verbose: verbose)
-    else
-      puts "#{target_dir} is up to date" if verbose
+  def self.make(mole_file, mole_dir, role_dir)
+    File.mkdir(role_dir)
+    meta_yml = "#{role_dir}/meta/main.yml"
+    if force || !File.exist?(meta_yml) || File.mtime(mole_file) > File.mtime(meta_yml)
+      compile_role(mole_file, role_dir)
+      true
     end
+
+    templates_dir = "#{target}/templates"
+    files_dir = "#{target}/files"
+
+    # FIXME: Check for overwrites of files from #make_file_role
+    Dir["#{source}/*"].grep_v { |f| f == use_file }.each { |f|
+      case f
+        when File.file?(f)
+          if f =~ /\.j2$/
+            mkdir(templates_dir)
+            cp(f, templates_dir)
+          else
+            mkdir_p(files_dir)
+            cp(f, files_dir)
+          end
+        when File.directory?(f)
+          cp(f, target)
+      else
+        raise Error, "Can't copy #{f}"
+      end
+    }
+
+    true
   end
 
 private
-  # source is a file, target is a directory. Target can be nil and defaults to
-  # dirname of source
-  def self.compile_role(source, target, verbose: false)
+  # Wrapper methods
+  def mkdir(d)
+    FileUtils.mkdir_p(d) rescue SystemCallError raise Error.new("Can't create directory #{d}")
+  end
+
+  def cp(s,t)
+    FileUtils.cp_r(s,t) rescue SystemCallError raise Error.new("Can't copy #{s}")
+  end
+
+  # source is a single-file role and target is the role directory
+  def self.compile_role(source, target)
     meta = []
     sections = {
       "defaults" => [],
@@ -33,7 +62,6 @@ private
     }
     current_section = meta
 
-    puts "Parsing #{source}" if verbose
     File.readlines(source).each { |line|
       line.chomp!
       next if line =~ /^---\s*$/
@@ -56,8 +84,6 @@ private
       dir = "#{target}/#{section}"
       file = "#{dir}/main.yml"
 
-      puts "Create #{file}" if verbose
-      FileUtils.mkdir_p(dir)
       File.open("#{dir}/main.yml", "w") { |f|
         f.puts "---" if section != "meta"
         unindent(lines).each { |l| f.puts l }

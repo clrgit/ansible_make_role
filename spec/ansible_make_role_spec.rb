@@ -7,6 +7,12 @@ describe "AnsibleMakeRole" do
     expect(AnsibleMakeRole::VERSION).not_to be_nil
   end
 
+  describe ".force" do
+  end
+
+  describe ".force=" do
+  end
+
   describe ".make_role" do
     around(:each) { |example|
       mktemp

@@ -3,26 +3,58 @@
 require 'ansible_make_role.rb'
 require "shellopts"
 
-USAGE = "f,force v,verbose version -- DIRECTORY..."
+USAGE = "d,dest=DIR f,force v,verbose version -- FILE|DIRECTORY..."
 
+dest = "roles"
 force = false
 verbose = false
+default_moles = true
 
 args = ShellOpts.process(USAGE, ARGV) { |opt, arg|
   case opt
+    when '-d', '--dest'; dest = arg
     when '-f', '--force'; force = true
     when '-v', '--verbose'; verbose = true
     when '--version'; puts "ansible-make-role #{AnsibleMakeRole::VERSION}"; exit
   end
 }
-args.size > 0 or args << "."
 
-for source in args
-  begin
-    AnsibleMakeRole.make("#{source}/make.yml", verbose: verbose, force: force)
-  rescue AnsibleMakeRole::CantReadFile => ex
-    ShellOpts::error("Can't read file #{ex.message}")
-  rescue AnsibleMakeRole::CantWriteDir => ex
-    ShellOpts::error("Can't write to directory #{ex.message}")
-  end
+if default_moles = args.empty?
+  args = Dir["moles/*"]
+  !args.empty? or ShellOpts::error "No mole files found"
+else
+  args.each { |f| File.exist?(f) or ShellOpts.error "Can't find #{f}" }
 end
+
+AnsibleMakeRole.force = force
+def verb(*msgs) print(msgs.join, "\n") if verbose end
+
+roles = {}
+args.each { |f|
+  if File.directory?(f)
+    role = f
+    role_name = File.basename(role)
+    (roles[role] ||= []).concat(Dir["#{f}/mole.yml", "#{f}/#{role_name}.yml"])
+  elsif File.file?(f) && f =~ /\.yml$/
+    role = f.sub(/\.yml$/, "")
+    (roles[role] ||= []).concat([f])
+  elsif default_moles
+    ; # Silently ignore random files if using default moles directory
+  else
+    ShellOpts::error "Not a mole: #{f}"
+  end
+}
+
+roles.each { |role, moles|
+  if moles.empty?
+    ShellOpts::error("No mole file found for #{role}"
+  elsif moles.size > 1
+    ShellOpts::error("Conflicting mole files: #{moles.join(", ")}")
+  end
+  mole = moles.first
+  role_name = File.basename(role)
+  role_dir = "#{dest}/#{role_name}"
+  result = AnsibleMakeRole.make(mole, File.exist?(role) ? role : nil, role_dir)
+  verb (result ? "Created #{role}" : "Skipped #{role}, is up to date")
+}
+
