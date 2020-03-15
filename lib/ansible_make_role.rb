@@ -19,22 +19,19 @@ module AnsibleMakeRole
   def self.git=(value) @git = value end
 
   def self.make(role_dir)
+    changed = false
     wrap_system_call_error {
       role_file = "#{role_dir}/#{ROLE_FILE_NAME}"
       meta_file = "#{role_dir}/meta/main.yml"
+      git_file = "#{role_dir}/.gitignore"
       if force || !File.exist?(meta_file) || File.mtime(role_file) > File.mtime(meta_file)
-        files = compile_role(role_file, role_dir)
-        if git
-          git_file = "#{role_dir}/.gitignore"
-          FileUtils.rm_f(git_file)
-          if !files.empty?
-            lines = files.map { |f| "./" + f.split("/")[-2..-1].join("/") + "\n" }.join
-            IO.write(git_file, lines)
-          end
+        if !compile_role(role_file, role_dir).empty?
+          IO.write(git_file, "*/main.yml\n") if git
+          changed = true
         end
-        true
       end
     }
+    return changed
   end
 
   def self.clean(role_dir)
@@ -94,21 +91,17 @@ private
       end
     }
 
-    generated_files = []
-    (sections.to_a + [["meta", meta]]).each { |section, lines|
-      next if lines.empty? && section != "meta"
-      next if lines.all? { |l| l =~ /^\s*$/ }
+    (sections.to_a + [["meta", meta]]).map { |section, lines|
+      next if lines.all? { |l| l =~ /^\s*$/ } && section != "meta"
       dir = "#{target}/#{section}"
       file = "#{dir}/main.yml"
-      generated_files << file
-
       FileUtils.mkdir_p(dir)
       File.open(file, "w") { |f|
         f.puts "---" if section != "meta"
         unindent(lines).each { |l| f.puts l }
       }
-    }
-    generated_files
+      file
+    }.compact
   end
 
   # Unindent lines by the indentation of the first non-comment and non-blank
