@@ -1,8 +1,8 @@
 # ansible-make-role
 
-Pre-compiler that turns single-file `role.yml` files into Ansible roles The
-`role.yml` file combines the Ansible `main.yml` where each `main.yml` file is
-represented by a section (`defaults:`, `vars:`, `tasks:` etc.)
+Pre-compiler that turns a single-file role definition into Ansible role files.
+The `role.yml` file combines the Ansible `main.yml` where each `main.yml` file
+is represented by a section (`defaults:`, `vars:`, `tasks:` etc.)
 
 ## Usage
 
