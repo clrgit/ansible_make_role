@@ -1,8 +1,10 @@
 
-o Replace ansible-make-role with an option: "-m - Make a single directory with a 'make.yml' file"
-o Add a "warning: auto-generated" header to all generated files. Checksum of files?
-o Make -f overwrite modifications in auto-generated files. Also remove orphaned files
+o Add a "warning: auto-generated" header to all generated files
+o Checksum of files?
+o Warn before overwrite if checksum doesn't match
 
 + Only copy templates/files if needed. What to do with directories?
+o Remove orphaned files
 
 - (Sym-)link files, templates, and directories?
+- Replace ansible-make-role with an option: "-m - Make a single directory with a 'make.yml' file"

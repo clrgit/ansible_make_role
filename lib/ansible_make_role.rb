@@ -3,55 +3,68 @@ require "ansible_make_role/version"
 require "fileutils"
 
 module AnsibleMakeRole
+  ROLE_FILE_NAME = "role.yml"
+
   class Error < StandardError; end
 
-  @force = true
-  def self.force=(value) @force = value end
+  @force = false
   def self.force() @force end
+  def self.force=(value) @force = value end
 
-  def self.make(mole_file, mole_dir, role_dir)
-    File.mkdir(role_dir)
-    meta_yml = "#{role_dir}/meta/main.yml"
-    if force || !File.exist?(meta_yml) || File.mtime(mole_file) > File.mtime(meta_yml)
-      compile_role(mole_file, role_dir)
-      true
-    end
+  @git = false
+  def self.git() @git end
+  def self.git=(value) @git = value end
 
-    templates_dir = "#{target}/templates"
-    files_dir = "#{target}/files"
-
-    # FIXME: Check for overwrites of files from #make_file_role
-    Dir["#{source}/*"].grep_v { |f| f == use_file }.each { |f|
-      case f
-        when File.file?(f)
-          if f =~ /\.j2$/
-            mkdir(templates_dir)
-            cp(f, templates_dir)
-          else
-            mkdir_p(files_dir)
-            cp(f, files_dir)
+  def self.make(role_dir)
+    wrap_system_call_error {
+      role_file = "#{role_dir}/#{ROLE_FILE_NAME}"
+      meta_file = "#{role_dir}/meta/main.yml"
+      if force || !File.exist?(meta_file) || File.mtime(role_file) > File.mtime(meta_file)
+        files = compile_role(role_file, role_dir)
+        if git
+          git_file = "#{role_dir}/.gitignore"
+          FileUtils.rm_f(git_file)
+          if !files.empty?
+            lines = files.map { |f| "./" + f.split("/")[-2..-1].join("/") + "\n" }.join
+            IO.write(git_file, lines)
           end
-        when File.directory?(f)
-          cp(f, target)
-      else
-        raise Error, "Can't copy #{f}"
+        end
+        true
       end
     }
+  end
 
-    true
+  def self.clean(role_dir)
+    changed = false
+    wrap_system_call_error {
+      File.exists?("#{role_dir}/#{ROLE_FILE_NAME}") or raise Error "Not a role directory: #{role_dir}"
+      for file in Dir["#{role_dir}/*/main.yml"]
+        FileUtils.rm(file)
+        dir = File.dirname(file)
+        FileUtils.rmdir(dir) if File.empty?(dir)
+        changed = true
+      end
+      git_file = "#{role_dir}/.gitignore"
+      if git && File.exist?(git_file)
+        FileUtils.rm(git_file)
+        changed = true
+      end
+    }
+    return changed
   end
 
 private
-  # Wrapper methods
-  def mkdir(d)
-    FileUtils.mkdir_p(d) rescue SystemCallError raise Error.new("Can't create directory #{d}")
+  # Turn a SystemCallError into a AnsibleMakeRole::Error exception and remove
+  # Ruby reference from message (eg. "@ rb_sysopen")
+  def self.wrap_system_call_error(&block)
+    begin
+      yield
+    rescue SystemCallError => ex
+      raise Error.new(ex.message.sub(/ @ \w+/, ""))
+    end
   end
 
-  def cp(s,t)
-    FileUtils.cp_r(s,t) rescue SystemCallError raise Error.new("Can't copy #{s}")
-  end
-
-  # source is a single-file role and target is the role directory
+  # source is a single-file role and target is the role directory. Returns list generated files
   def self.compile_role(source, target)
     meta = []
     sections = {
@@ -78,17 +91,21 @@ private
       end
     }
 
+    generated_files = []
     (sections.to_a + [["meta", meta]]).each { |section, lines|
       next if lines.empty? && section != "meta"
       next if lines.all? { |l| l =~ /^\s*$/ }
       dir = "#{target}/#{section}"
       file = "#{dir}/main.yml"
+      generated_files << file
 
-      File.open("#{dir}/main.yml", "w") { |f|
+      FileUtils.mkdir_p(dir)
+      File.open(file, "w") { |f|
         f.puts "---" if section != "meta"
         unindent(lines).each { |l| f.puts l }
       }
     }
+    generated_files
   end
 
   # Unindent lines by the indentation of the first non-comment and non-blank

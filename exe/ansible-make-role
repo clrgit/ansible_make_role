@@ -3,58 +3,74 @@
 require 'ansible_make_role.rb'
 require "shellopts"
 
-USAGE = "d,dest=DIR f,force v,verbose version -- FILE|DIRECTORY..."
+USAGE = "c,clean f,force g,git +r,roles=DIR v,verbose version -- DIRECTORY..."
 
-dest = "roles"
+DEFAULT_ROLES_DIR = "./roles"
+
+clean = false
 force = false
+git = false
+roles_dirs = [] # A roles (plural) directory contain role (singular) directories
 verbose = false
-default_moles = true
 
 args = ShellOpts.process(USAGE, ARGV) { |opt, arg|
   case opt
-    when '-d', '--dest'; dest = arg
+    when '-c', '--clean'; clean = true
     when '-f', '--force'; force = true
+    when '-g', '--git'; git = true
+    when '-r', '--roles'
+      File.directory?(arg) or ShellOpts::error "Not a directory: #{arg}"
+      roles_dirs << arg
     when '-v', '--verbose'; verbose = true
     when '--version'; puts "ansible-make-role #{AnsibleMakeRole::VERSION}"; exit
   end
 }
 
-if default_moles = args.empty?
-  args = Dir["moles/*"]
-  !args.empty? or ShellOpts::error "No mole files found"
+AnsibleMakeRole.force = force
+AnsibleMakeRole.git = git
+if verbose
+  def verb(*msgs) print(msgs.join, "\n") end
 else
-  args.each { |f| File.exist?(f) or ShellOpts.error "Can't find #{f}" }
+  def verb(*_) end
 end
 
-AnsibleMakeRole.force = force
-def verb(*msgs) print(msgs.join, "\n") if verbose end
-
-roles = {}
-args.each { |f|
-  if File.directory?(f)
-    role = f
-    role_name = File.basename(role)
-    (roles[role] ||= []).concat(Dir["#{f}/mole.yml", "#{f}/#{role_name}.yml"])
-  elsif File.file?(f) && f =~ /\.yml$/
-    role = f.sub(/\.yml$/, "")
-    (roles[role] ||= []).concat([f])
-  elsif default_moles
-    ; # Silently ignore random files if using default moles directory
+if args.empty? && roles_dirs.empty? 
+  if File.directory?(DEFAULT_ROLES_DIR)
+    roles_dirs << DEFAULT_ROLES_DIR
   else
-    ShellOpts::error "Not a mole: #{f}"
+    ShellOpts::error "No roles given"
   end
-}
+end
 
-roles.each { |role, moles|
-  if moles.empty?
-    ShellOpts::error("No mole file found for #{role}"
-  elsif moles.size > 1
-    ShellOpts::error("Conflicting mole files: #{moles.join(", ")}")
+roles = args
+for roles_dir in roles_dirs
+  roles += Dir["#{roles_dir}/*"].select { |d| File.directory?(d) }
+end
+
+if roles.empty?
+  $stderr.puts "#{PROGRAM}: No roles found"
+  exit 0
+end
+
+begin
+  if clean
+    for role in roles
+      if AnsibleMakeRole.clean(role)
+        verb("Cleaned #{role}")
+      else
+        verb("Skipped #{role} - already clean")
+      end
+    end
+  else
+    for role in roles
+      if AnsibleMakeRole.make(role)
+        verb("Updated #{role}")
+      else
+        verb("Skipped #{role} - up to date")
+      end
+    end
   end
-  mole = moles.first
-  role_name = File.basename(role)
-  role_dir = "#{dest}/#{role_name}"
-  result = AnsibleMakeRole.make(mole, File.exist?(role) ? role : nil, role_dir)
-  verb (result ? "Created #{role}" : "Skipped #{role}, is up to date")
-}
-
+rescue AnsibleMakeRole::Error => ex
+  ShellOpts::fail(ex.message)
+end
+  
