@@ -91,8 +91,12 @@ private
       end
     }
 
+    if meta.all? { |l| l =~ /^\s*$/ }
+      meta = ["dependencies: []"]
+    end
+
     (sections.to_a + [["meta", meta]]).map { |section, lines|
-      next if lines.all? { |l| l =~ /^\s*$/ } && section != "meta"
+      next if lines.all? { |l| l =~ /^\s*$/ }
       dir = "#{target}/#{section}"
       file = "#{dir}/main.yml"
       FileUtils.mkdir_p(dir)
