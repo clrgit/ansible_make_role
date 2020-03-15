@@ -2,6 +2,15 @@
 o Add a "warning: auto-generated" header to all generated files
 o Checksum of files?
 o Warn before overwrite if checksum doesn't match
+o Write comments "connected" to a section in the section file:
+
+  # Goes to meta/main.yml
+
+  # Goes to defaults/main.yml
+  #
+  defaults:
+    # Goes to defaults/main.yml
+    
 
 + Only copy templates/files if needed. What to do with directories?
 o Remove orphaned files

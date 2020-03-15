@@ -8,12 +8,41 @@ describe "AnsibleMakeRole" do
   end
 
   describe ".force" do
+    it "returns the value of the force flag" do
+      expect(AnsibleMakeRole.force).to eq AnsibleMakeRole::DEFAULT_FORCE_FLAG
+    end
   end
 
   describe ".force=" do
+    it "sets the force flag" do
+      AnsibleMakeRole.force = false
+      expect(AnsibleMakeRole.force).to eq false
+      AnsibleMakeRole.force = true
+      expect(AnsibleMakeRole.force).to eq true
+    end
   end
 
-  describe ".make_role" do
+  describe ".git" do
+    it "returns the value of the git flag" do
+      expect(AnsibleMakeRole.git).to eq AnsibleMakeRole::DEFAULT_GIT_FLAG
+    end
+  end
+
+  describe ".git=" do
+    it "sets the git flag" do
+      AnsibleMakeRole.git = false
+      expect(AnsibleMakeRole.git).to eq false
+      AnsibleMakeRole.git = true
+      expect(AnsibleMakeRole.git).to eq true
+    end
+  end
+
+  describe ".clean" do
+    it "removes auto-generated files"
+    it "returns true if any file was removed"
+  end
+
+  describe ".make" do
     around(:each) { |example|
       mktemp
       example.run
@@ -37,6 +66,12 @@ describe "AnsibleMakeRole" do
           value: anything
       HERE
     end
+
+    it "ignores up-to-date roles unless .force is true"
+
+    it "generates a .gitignore file if .git is true"
+
+    it "returns true if any file was generated"
 
     it "generates a main.yml file for each section in the make.yml file" do
       make_section_example
@@ -90,12 +125,12 @@ describe "AnsibleMakeRole" do
     it "preserves blank lines" do
       make_role <<~HERE
         ---
-        # This before
+        # Before
         
         # After
       HERE
       expect(meta_file).to eq <<~HERE
-        # This before
+        # Before
         
         # After
       HERE

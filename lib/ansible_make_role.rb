@@ -5,13 +5,16 @@ require "fileutils"
 module AnsibleMakeRole
   ROLE_FILE_NAME = "role.yml"
 
+  DEFAULT_FORCE_FLAG = false
+  DEFAULT_GIT_FLAG = false
+
   class Error < StandardError; end
 
-  @force = false
+  @force = DEFAULT_FORCE_FLAG
   def self.force() @force end
   def self.force=(value) @force = value end
 
-  @git = false
+  @git = DEFAULT_GIT_FLAG
   def self.git() @git end
   def self.git=(value) @git = value end
 

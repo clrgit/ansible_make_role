@@ -10,7 +10,7 @@ DEFAULT_ROLES_DIR = "./roles"
 clean = false
 force = false
 git = false
-roles_dirs = [] # A roles (plural) directory contain role (singular) directories
+roles_dirs = [] # A roles (plural) directory containing role (singular) directories
 verbose = false
 
 args = ShellOpts.process(USAGE, ARGV) { |opt, arg|
@@ -38,35 +38,33 @@ if args.empty? && roles_dirs.empty?
   if File.directory?(DEFAULT_ROLES_DIR)
     roles_dirs << DEFAULT_ROLES_DIR
   else
-    ShellOpts::error "No roles given"
+    ShellOpts::error "No role_dirs given"
   end
 end
 
-roles = args
+role_dirs = args
 for roles_dir in roles_dirs
-  roles += Dir["#{roles_dir}/*"].select { |d| File.directory?(d) }
+  role_dirs += Dir["#{roles_dir}/*"].select { |d| File.directory?(d) }
 end
 
-if roles.empty?
-  $stderr.puts "#{PROGRAM}: No roles found"
+if role_dirs.empty?
+  $stderr.puts "#{PROGRAM}: No role_dirs found"
   exit 0
 end
 
 begin
-  if clean
-    for role in roles
-      if AnsibleMakeRole.clean(role)
-        verb("Cleaned #{role}")
+  for role_dir in role_dirs
+    if clean
+      if AnsibleMakeRole.clean(role_dir)
+        verb("Cleaned #{role_dir}")
       else
-        verb("Skipped #{role} - already clean")
+        verb("Skipped #{role_dir} - already clean")
       end
-    end
-  else
-    for role in roles
-      if AnsibleMakeRole.make(role)
-        verb("Updated #{role}")
+    else
+      if AnsibleMakeRole.make(role_dir)
+        verb("Updated #{role_dir}")
       else
-        verb("Skipped #{role} - up to date")
+        verb("Skipped #{role_dir} - up to date")
       end
     end
   end

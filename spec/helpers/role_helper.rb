@@ -3,6 +3,7 @@ require 'yaml'
 
 TMPDIR = "spec/tmp"
 $ANSIBLE_DEBUG = false # Set to true to keep role directory
+#$ANSIBLE_DEBUG = true
 
 def mktemp
   FileUtils.rm_rf(TMPDIR)
@@ -13,17 +14,17 @@ def rmtemp
   FileUtils.rm_rf(TMPDIR) if !$ANSIBLE_DEBUG
 end
 
-def make_yml_path()
-  "#{TMPDIR}/make.yml"
+def role_file_path()
+  "#{TMPDIR}/role.yml"
 end
 
-def make_make_yml(s)
-  IO.write(make_yml_path, s)
+def make_role_file(s)
+  IO.write(role_file_path, s)
 end
 
-def make_role(s, options = {})
-  make_make_yml(s)
-  AnsibleMakeRole.make(make_yml_path, **options)
+def make_role(s)
+  make_role_file(s)
+  AnsibleMakeRole.make(TMPDIR)
 end
 
 def section_path(section_name)

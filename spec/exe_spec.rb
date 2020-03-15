@@ -29,7 +29,7 @@ describe "ansible-make-role command" do
 
   around(:each) { |example|
     mktemp
-    make_make_yml <<~HERE
+    make_role_file <<~HERE
       dependencies:
         - somerole
     HERE
@@ -38,56 +38,56 @@ describe "ansible-make-role command" do
   }
 
   context "options" do
+    context "--clean" do
+      it "removes all generated files"
+      it "also removes .gitignore if --git is given"
+    end
+
+    context "--force" do
+      it "also recompile up to date roles" do
+        exe.call("--force --verbose #{TMPDIR} #{TMPDIR}")
+        expect(stdout).to include("Updated #{TMPDIR}", "Updated #{TMPDIR}")
+      end
+    end
+
+    context "--roles=DIR" do
+      it "use the given directory instead of ./roles"
+    end
+
+    context "--git" do
+      it "handles .gitignore files"
+    end
+
+    context "--verbose" do
+      it "reports status for each role" do
+        exe.call("--verbose #{TMPDIR} #{TMPDIR}")
+        expect(stdout).to include("Updated #{TMPDIR}", "Skipped #{TMPDIR} - up to date")
+      end
+    end
+
     context "--version" do
       it "prints name and version" do
         exe.call("--version")
         expect(stdout).to eq ["ansible-make-role #{AnsibleMakeRole::VERSION}"]
       end
     end
-
-    context "--verbose" do
-      it "reports progress for updated roles" do
-        exe.call("--verbose #{TMPDIR}")
-        expect(stdout).to eq ["Parsing #{TMPDIR}/make.yml", "Create #{TMPDIR}/meta/main.yml"]
-      end
-
-      it "reports no change for up to date roles" do
-        exe.call("#{TMPDIR}")
-        exe.call("--verbose #{TMPDIR}")
-        expect(stdout).to eq ["#{TMPDIR} is up to date"]
-      end
-    end
-
-    context "--force" do
-      it "also recompile up to date roles" do
-        exe.call("--force --verbose #{TMPDIR}")
-        expect(stdout).to eq ["Parsing #{TMPDIR}/make.yml", "Create #{TMPDIR}/meta/main.yml"]
-      end
-    end
-  end
-
-  it "fails if directory is not writable" do
-    FileUtils.rm_rf(TMPDIR)
-    exe.call(TMPDIR)
-    expect(status).to eq 1
-    expect(stderr).to include("ansible-make-role: Can't write to directory #{TMPDIR}")
   end
 
   it "fails if make.yml is not readable" do
-    FileUtils.rm(make_yml_path)
+    FileUtils.rm(role_file_path)
     exe.call(TMPDIR)
     expect(status).to eq 1
-    expect(stderr).to include("ansible-make-role: Can't read file #{TMPDIR}/make.yml")
+    expect(stderr).to include("ansible-make-role: No such file or directory - #{TMPDIR}/role.yml")
   end
 
   it "accepts multiple directory arguments" do
     exe.call("--verbose #{TMPDIR} #{TMPDIR}")
-    expect(stdout).to include("Parsing #{TMPDIR}/make.yml", "#{TMPDIR} is up to date")
+    expect(stdout).to include("Updated #{TMPDIR}", "Skipped #{TMPDIR} - up to date")
   end
 
   it "only compiles out of date roles" do
     exe.call("--verbose #{TMPDIR} #{TMPDIR}")
-    expect(stdout).to include("Parsing #{TMPDIR}/make.yml", "#{TMPDIR} is up to date")
+    expect(stdout).to include("Updated #{TMPDIR}", "Skipped #{TMPDIR} - up to date")
   end
 end
 
