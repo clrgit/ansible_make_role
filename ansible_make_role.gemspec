@@ -11,11 +11,10 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{Make Ansible role from make.yml file}
   spec.description   = %q{
-                          Instead of having an Ansible role per-directory
-                          main.yml file, ansible-make-role processes a make.yml
-                          file in the role directory and generates the main.yml
-                          files from that. In make.yml each main.yml definition
-                          is contained in a per-file section: 'defaults',
+                          ansible-make-role process a single-file role
+                          definition file and generate an Ansible role from it.
+                          The role is defined in the role.yml file and contain
+                          a section for each Ansible main.yml file: 'defaults',
                           'vars', 'tasks', and 'handlers'. Definitions outside
                           of those sections (notably 'dependencies') are going
                           to the meta/main.yml file
