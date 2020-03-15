@@ -40,7 +40,7 @@ module AnsibleMakeRole
   def self.clean(role_dir)
     changed = false
     wrap_system_call_error {
-      File.exists?("#{role_dir}/#{ROLE_FILE_NAME}") or raise Error "Not a role directory: #{role_dir}"
+      File.exists?("#{role_dir}/#{ROLE_FILE_NAME}") or raise Error.new("Not a role directory: #{role_dir}")
       for file in Dir["#{role_dir}/*/main.yml"]
         FileUtils.rm(file)
         dir = File.dirname(file)
