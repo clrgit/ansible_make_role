@@ -44,7 +44,7 @@ end
 
 role_dirs = args
 for roles_dir in roles_dirs
-  role_dirs += Dir["#{roles_dir}/*/role.yml"].map { |f| File.dirname(f) }
+  role_dirs += Dir["#{roles_dir}/**/role.yml"].map { |f| File.dirname(f) }
 end
 
 if role_dirs.empty?
