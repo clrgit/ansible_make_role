@@ -64,7 +64,8 @@ private
     end
   end
 
-  # source is a single-file role and target is the role directory. Returns list generated files
+  # source is a single-file role and target is the role directory. Returns list
+  # of generated files
   def self.compile_role(source, target)
     meta = []
     sections = {
@@ -96,9 +97,10 @@ private
     end
 
     (sections.to_a + [["meta", meta]]).map { |section, lines|
-      next if lines.all? { |l| l =~ /^\s*$/ }
       dir = "#{target}/#{section}"
       file = "#{dir}/main.yml"
+      FileUtils.rm_f(dir)
+      next if lines.all? { |l| l =~ /^\s*$/ }
       FileUtils.mkdir_p(dir)
       File.open(file, "w") { |f|
         f.puts "---" if section != "meta"
