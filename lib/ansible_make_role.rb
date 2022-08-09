@@ -101,7 +101,7 @@ private
       file = "#{dir}/main.yml"
       if lines.all? { |l| l =~ /^\s*$/ }
         FileUtils.rm_f(file)
-        FileUtils.rmdir(dir) if Dir.empty?(dir)
+        FileUtils.rmdir(dir) if Dir.exist?(dir)
         nil
       else
         FileUtils.mkdir_p(dir)
@@ -109,8 +109,8 @@ private
           f.puts "---" if section != "meta"
           unindent(lines).each { |l| f.puts l }
         }
+        file
       end
-      file
     }.compact
   end
 
