@@ -55,7 +55,7 @@ module AnsibleMakeRole
 
 private
   # Turn a SystemCallError into a AnsibleMakeRole::Error exception and remove
-  # Ruby reference from message (eg. "@ rb_sysopen")
+  # Ruby reference from message (eg. the "@ rb_sysopen" part)
   def self.wrap_system_call_error(&block)
     begin
       yield
@@ -99,13 +99,17 @@ private
     (sections.to_a + [["meta", meta]]).map { |section, lines|
       dir = "#{target}/#{section}"
       file = "#{dir}/main.yml"
-      FileUtils.rm_f(dir)
-      next if lines.all? { |l| l =~ /^\s*$/ }
-      FileUtils.mkdir_p(dir)
-      File.open(file, "w") { |f|
-        f.puts "---" if section != "meta"
-        unindent(lines).each { |l| f.puts l }
-      }
+      if lines.all? { |l| l =~ /^\s*$/ }
+        FileUtils.rm_f(file)
+        FileUtils.rmdir(dir) if Dir.empty?(dir)
+        nil
+      else
+        FileUtils.mkdir_p(dir)
+        File.open(file, "w") { |f|
+          f.puts "---" if section != "meta"
+          unindent(lines).each { |l| f.puts l }
+        }
+      end
       file
     }.compact
   end
