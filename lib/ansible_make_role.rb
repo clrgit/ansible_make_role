@@ -70,9 +70,9 @@ private
     meta = []
     sections = {
       "defaults" => [],
-      "vars" => [],
+      "handlers" => [],
       "tasks" => [],
-      "handlers" => []
+      "vars" => []
     }
     current_section = meta
 
