@@ -1,4 +1,5 @@
 
+o Fix current from ShellOpts upgrade
 o Add a "warning: auto-generated" header to all generated files
 o Checksum of files?
 o Warn before overwrite if checksum doesn't match
