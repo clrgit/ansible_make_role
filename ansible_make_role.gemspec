@@ -42,6 +42,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rspec"
 
-  spec.add_dependency "shellopts", "0.9.3"
+  spec.add_dependency "shellopts"
   spec.add_dependency "indented_io"
 end
