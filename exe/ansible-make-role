@@ -3,36 +3,32 @@
 require 'ansible_make_role.rb'
 require "shellopts"
 
-USAGE = "c,clean f,force g,git +r,roles=DIR v,verbose version -- DIRECTORY..."
+USAGE = %(
+  @ Create an Ansible role
+
+  -- DIRECTORY...
+
+  -c,clean
+
+  -f,force
+
+  -g,git
+
+  +r,roles=EDIR
+)
+  
 
 DEFAULT_ROLES_DIR = "./roles"
 
-clean = false
-force = false
-git = false
-roles_dirs = [] # A roles (plural) directory containing role (singular) directories
-verbose = false
+opts, args = ShellOpts.process(USAGE, ARGV, verbose: true)
 
-args = ShellOpts.process(USAGE, ARGV) { |opt, arg|
-  case opt
-    when '-c', '--clean'; clean = true
-    when '-f', '--force'; force = true
-    when '-g', '--git'; git = true
-    when '-r', '--roles'
-      File.directory?(arg) or ShellOpts::error "Not a directory: #{arg}"
-      roles_dirs << arg
-    when '-v', '--verbose'; verbose = true
-    when '--version'; puts "ansible-make-role #{AnsibleMakeRole::VERSION}"; exit
-  end
-}
+clean = opts.clean?
+force = opts.force?
+git = opts.git?
+roles_dirs = opts.roles # A roles (plural) directory containing role (singular) directories
 
 AnsibleMakeRole.force = force
 AnsibleMakeRole.git = git
-if verbose
-  def verb(*msgs) print(msgs.join, "\n") end
-else
-  def verb(*_) end
-end
 
 if args.empty? && roles_dirs.empty? 
   if File.directory?(DEFAULT_ROLES_DIR)
