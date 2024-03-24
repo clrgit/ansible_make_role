@@ -1,4 +1,4 @@
-require "ansible_make_role/version"
+require_relative "ansible_make_role/version"
 
 require "fileutils"
 
